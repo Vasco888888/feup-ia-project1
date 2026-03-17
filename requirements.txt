@@ -1,11 +1,6 @@
 # Data Handling & Math
 numpy
-pandas 
+pandas
 
 # Visualization & GUI
-matplotlib
-pygame
-
-# Utilities
-scipy
-primepy
+matplotlib
