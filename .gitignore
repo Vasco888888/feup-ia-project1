@@ -11,3 +11,7 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Project outputs
+solution.png
+data/*.png
