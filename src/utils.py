@@ -4,9 +4,9 @@ import os
 def load_cities(size):
     """
     Loads cities for a given instance size.
-    Expects data to be in data/instances/{size}/cities.csv
+    Expects data to be in data/{size}/cities.csv
     """
-    path = os.path.join('data', 'instances', str(size), 'cities.csv')
+    path = os.path.join('data', str(size), 'cities.csv')
     if not os.path.exists(path):
         raise FileNotFoundError(f"Instance size {size} not found at {path}")
     
@@ -15,9 +15,9 @@ def load_cities(size):
 def load_benchmarks(size):
     """
     Loads benchmark paths for a given instance size.
-    Expects data to be in data/instances/{size}/benchmarks.csv
+    Expects data to be in data/{size}/benchmarks.csv
     """
-    path = os.path.join('data', 'instances', str(size), 'benchmarks.csv')
+    path = os.path.join('data', str(size), 'benchmarks.csv')
     if not os.path.exists(path):
         return None
     
