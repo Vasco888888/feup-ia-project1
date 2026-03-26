@@ -1,6 +1,6 @@
 import os
 import sys
-
+import time
 from src.problem import SantaProblem
 
 def run_menu():
@@ -44,53 +44,80 @@ def run_menu():
             continue
             
         size = size_map[size_choice]
-        
+
+        # Hill Climbing is O(n^2) per iteration — warn for large datasets
+        if algo_choice == '1' and size_choice in ('4', '5'):
+            print(f"\n[WARNING] Hill Climbing is not practical for {size} cities.")
+            print("It scans all O(n²) 2-opt neighbors each iteration and will be extremely slow.")
+            confirm = input("Continue anyway? (y/N): ").strip().lower()
+            if confirm != 'y':
+                continue
+
         print(f"\n--- Loading {size} cities ---")
         try:
             problem = SantaProblem(size)
         except Exception as e:
             print(f"Error loading dataset: {e}")
             continue
-            
-        # run alg
+
+        # ── Algorithm dispatch ─────────────────────────────────────────────
         if algo_choice == '1':
-            print("\n--- Running Hill Climbing ---")
             from src.algorithms.hill_climbing import hill_climbing
-            
-            # save initial state
+
+            print("\n--- Running Hill Climbing ---")
+
             initial_state = problem.get_random_solution()
-            initial_val = problem.calculate_distance(initial_state)
-            print(f"Initial Random Distance: {initial_val:.2f}")
-            
-            # run hill climbing
+
+            start_time = time.time()
             final_path = hill_climbing(problem, initial_state)
-            
+            elapsed = time.time() - start_time
+
+            final_distance = problem.calculate_distance(final_path)
+            print(f"Distance: {final_distance:.2f} | Time: {elapsed:.2f}s")
+
+            algo_name  = "Hill Climbing"
+            params_str = "Steepest Ascent (2-opt)"
+            the_path_to_validate = final_path
+            best_overall_dist    = final_distance
+            run_time             = elapsed
+
         elif algo_choice == '2':
             print("\n--- Running Simulated Annealing ---")
-            print("-------------")
+            print("(Pending Team Member)")
             continue
+
         elif algo_choice == '3':
             print("\n--- Running Genetic Algorithm ---")
-            print("-------------")
+            print("(Pending Team Member)")
             continue
-            
-        # validate and print
+
+        # ── Validation & results ───────────────────────────────────────────
         print("\n--- Results ---")
-        is_valid, message = problem.validate_path(final_path)
+        is_valid, message = problem.validate_path(the_path_to_validate)
         print(f"Path Validation: {message}")
 
         if is_valid:
-            final_distance = problem.calculate_distance(final_path)
-            print(f"Final Climed Distance: {final_distance:.2f}")
-            print(f"Total Improvement: {initial_val - final_distance:.2f}")
+            print(f"Best Distance : {best_overall_dist:.2f}")
+            print(f"Execution Time: {run_time:.2f}s")
 
-            # only plot if <= 1000 cities or matplotlib freezes
+            log_line = (
+                f"{algo_name} | Dataset: {size} | Env: {params_str} "
+                f"| Dist: {best_overall_dist:.2f} | Time: {run_time:.2f}s\n"
+            )
+            try:
+                with open("results.txt", "a") as f:
+                    f.write(log_line)
+                print(">> Saved metrics to results.txt")
+            except Exception as e:
+                print(f"Failed to log results: {e}")
+
             if problem.num_cities <= 1000:
                 print("\nSaving plot visualization to 'solution.png'...")
-                algo_names = {'1': 'Hill Climbing', '2': 'Simulated Annealing', '3': 'Genetic Algorithm'}
-                problem.plot_solution(final_path, title=f"{algo_names[algo_choice]} Solution ({size} cities)")
+                problem.plot_solution(
+                    the_path_to_validate,
+                    title=f"{algo_name} Solution ({size} cities)"
+                )
 
-        # wait before menu
         input("\nPress Enter to return to the main menu...")
 
 if __name__ == "__main__":
