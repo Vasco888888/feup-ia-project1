@@ -71,8 +71,13 @@ def run_menu():
             continue
         elif algo_choice == '3':
             print("\n--- Running Genetic Algorithm ---")
-            print("-------------")
-            continue
+            from src.algorithms.genetic_algorithm import genetic_algorithm
+
+            initial_state = problem.get_random_solution()
+            initial_val = problem.calculate_distance(initial_state)
+            print(f"Initial Random Distance: {initial_val:.2f}")
+
+            final_path = genetic_algorithm(problem, initial_state)
             
         # validate and print
         print("\n--- Results ---")
