@@ -7,7 +7,9 @@ def _ox_crossover(parent1: np.ndarray, parent2: np.ndarray) -> np.ndarray:
     child = np.full(n, -1, dtype=int)
     child[a:b+1] = parent1[a:b+1]
 
-    fill_vals = [v for v in parent2 if v not in child[a:b+1]]
+    in_slice = set(parent1[a:b+1])
+    fill_vals = [v for v in parent2 if v not in in_slice]
+
     idx = 0
     for i in range(n):
         if child[i] == -1:
@@ -16,35 +18,12 @@ def _ox_crossover(parent1: np.ndarray, parent2: np.ndarray) -> np.ndarray:
     return child
 
 
-def _get_edges(path: np.ndarray) -> set:
-    n = len(path)
-    return {(min(path[i], path[(i+1) % n]), max(path[i], path[(i+1) % n]))
-            for i in range(n)}
-
-
-def _repair_disjointness(path1: np.ndarray, path2: np.ndarray,
-                          max_attempts: int = 200) -> tuple:
-    p2 = path2.copy()
-    edges1 = _get_edges(path1)
-
-    for _ in range(max_attempts):
-        shared = []
-        n = len(p2)
-        edges2 = _get_edges(p2)
-        shared = edges1 & edges2
-        if not shared:
-            break
-
-        u, v = next(iter(shared))
-        pos = {city: i for i, city in enumerate(p2)}
-        i, j = sorted([pos[u], pos[v]])
-        if j - i > 1:
-            p2[i:j+1] = p2[i:j+1][::-1]
-        else:
-            i, j = sorted(np.random.choice(n, 2, replace=False))
-            p2[i:j+1] = p2[i:j+1][::-1]
-
-    return path1, p2
+def _build_disjoint_path(path1: np.ndarray) -> np.ndarray:
+    n = len(path1)
+    lo = max(1, n // 4)
+    hi = max(lo + 1, 3 * n // 4)
+    offset = np.random.randint(lo, hi)
+    return np.roll(path1, offset)
 
 
 def _two_opt_move(path: np.ndarray) -> np.ndarray:
@@ -57,48 +36,71 @@ def _two_opt_move(path: np.ndarray) -> np.ndarray:
 
 def _mutate(individual: tuple, mutation_rate: float) -> tuple:
     path1, path2 = individual
+    mutated_p1 = False
 
     if np.random.rand() < mutation_rate:
         path1 = _two_opt_move(path1)
-    if np.random.rand() < mutation_rate:
+        mutated_p1 = True
+
+    if mutated_p1:
+        path2 = _build_disjoint_path(path1)
+    elif np.random.rand() < mutation_rate:
         path2 = _two_opt_move(path2)
 
-    path1, path2 = _repair_disjointness(path1, path2)
     return (path1, path2)
 
 
 def _crossover(parent1: tuple, parent2: tuple) -> tuple:
-    c1 = _ox_crossover(parent1[0], parent2[0])
-    c2 = _ox_crossover(parent1[1], parent2[1])
-    c1, c2 = _repair_disjointness(c1, c2)
-    return (c1, c2)
+    child_p1 = _ox_crossover(parent1[0], parent2[0])
+    child_p2 = _build_disjoint_path(child_p1)
+    return (child_p1, child_p2)
 
 
-def _tournament_select(population: list, fitnesses: np.ndarray,
-                        k: int = 3) -> tuple:
+def _tournament_select(population: list, fitnesses: np.ndarray, k: int) -> tuple:
     contestants = np.random.choice(len(population), k, replace=False)
     winner = contestants[np.argmin(fitnesses[contestants])]
     return population[winner]
 
+
+def _scale_params(num_cities: int):
+    if num_cities <= 100:
+        return 60, 300, 60
+    elif num_cities <= 1000:
+        return 40, 150, 40
+    elif num_cities <= 10000:
+        return 20, 80, 25
+    else:  # 150000
+        return 10, 30, 15
+
+
 def genetic_algorithm(
     problem,
     initial_state,
-    population_size: int = 80,
-    generations: int = 300,
-    mutation_rate: float = 0.15,
+    population_size: int = None,
+    generations: int = None,
+    mutation_rate: float = 0.2,
     crossover_rate: float = 0.85,
-    elitism: int = 5,
-    tournament_k: int = 4,
-    stagnation_limit: int = 60,
+    elitism: int = 2,
+    tournament_k: int = 3,
+    stagnation_limit: int = None,
 ) -> tuple:
-   
-    print(f"GA | pop={population_size}  gens={generations}  "
-          f"mut={mutation_rate}  cx={crossover_rate}")
+    
+    pop_auto, gen_auto, stag_auto = _scale_params(problem.num_cities)
+    if population_size is None:
+        population_size = pop_auto
+    if generations is None:
+        generations = gen_auto
+    if stagnation_limit is None:
+        stagnation_limit = stag_auto
+
+    print(f"GA | cities={problem.num_cities}  pop={population_size}  "
+          f"gens={generations}  mut={mutation_rate}  cx={crossover_rate}")
 
     population = [initial_state]
     for _ in range(population_size - 1):
-        ind = problem.get_random_solution()
-        population.append(ind)
+        p1 = np.random.permutation(problem.num_cities)
+        p2 = _build_disjoint_path(p1)
+        population.append((p1, p2))
 
     fitnesses = np.array([problem.calculate_distance(ind) for ind in population])
 
@@ -138,7 +140,7 @@ def genetic_algorithm(
         else:
             stagnation += 1
 
-        if gen % 25 == 0 or stagnation == 0:
+        if gen % 10 == 0 or stagnation == 0:
             print(f"  Gen {gen:3d} | best={best_fit:.2f}  stagnation={stagnation}")
 
         if stagnation >= stagnation_limit:

@@ -12,7 +12,7 @@ def run_menu():
         print("\nSelect an Algorithm:")
         print("1. Hill Climbing")
         print("2. Simulated Annealing (Pending Team Member)")
-        print("3. Genetic Algorithm (Pending Team Member)")
+        print("3. Genetic Algorithm")
         print("0. Exit")
         
         algo_choice = input("\nEnter choice (0-3): ").strip()
