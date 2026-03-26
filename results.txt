@@ -9,3 +9,5 @@ Hill Climbing | Dataset: 10 | Env: Steepest Ascent (2-opt intra + inter-path) | 
 Hill Climbing | Dataset: 100 | Env: Steepest Ascent (2-opt intra + inter-path) | Dist: 10731.86 | Time: 1.94s
 Hill Climbing | Dataset: 1000 | Env: Steepest Ascent (2-opt intra + inter-path) | Dist: 31113.39 | Time: 358.61s
 Hill Climbing | Dataset: 10 | Env: Steepest Ascent (2-opt) | Dist: 394.29 | Time: 0.00s
+Hill Climbing | Dataset: 10 | Env: Steepest Ascent (2-opt) | Dist: 391.81 | Time: 0.00s
+Hill Climbing | Dataset: 100 | Env: Steepest Ascent (2-opt) | Dist: 10329.58 | Time: 14.36s
