@@ -110,11 +110,11 @@ def run_menu():
           f"| Dist: {final_distance:.2f} | Time: {elapsed:.2f}s\n"
       )
       try:
-          with open("results.txt", "a") as f:
-              f.write(log_line)
-          print(">> Saved metrics to results.txt")
+        with open("results.txt", "a") as f:
+          f.write(log_line)
+        print(">> Saved metrics to results.txt")
       except Exception as e:
-          print(f"Failed to log results: {e}")
+        print(f"Failed to log results: {e}")
 
       if problem.num_cities <= 1000:
         print("\nSaving plot visualization to 'solution.png'...")
@@ -125,4 +125,3 @@ def run_menu():
 
 if __name__ == "__main__":
   run_menu()
-
