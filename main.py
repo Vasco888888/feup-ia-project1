@@ -31,12 +31,19 @@ def run_menu():
     print("1. 10 cities")
     print("2. 100 cities")
     print("3. 1000 cities")
-    print("4. 10000 cities")
-    print("5. 150000 cities")
+    if algo_choice != '1':
+      print("4. 10000 cities")
+      print("5. 150000 cities")
     print("0. Back to algorithms")
     
-    size_map = {'1': '10', '2': '100', '3': '1000', '4': '10000', '5': '150000'}
-    size_choice = input("\nEnter choice (0-5): ").strip()
+    size_map = {'1': '10', '2': '100', '3': '1000'}
+    if algo_choice != '1':
+      size_map.update({'4': '10000', '5': '150000'})
+      prompt = "\nEnter choice (0-5): "
+    else:
+      prompt = "\nEnter choice (0-3): "
+
+    size_choice = input(prompt).strip()
     
     if size_choice == '0':
       continue
@@ -47,14 +54,14 @@ def run_menu():
       
     size = size_map[size_choice]
     
-    # Hill Climbing is O(n^2) per iteration — block large datasets
-    if algo_choice == '1' and size_choice in ('4', '5'):
-      print(f"\n[ERROR] Hill Climbing cannot practically solve {size} cities.")
-      print("It evaluates O(n²) 2-opt neighbors per iteration, which would take years to complete.")
-      print("Please use Simulated Annealing for datasets of this scale.")
-      continue
-
     print(f"\n--- Loading {size} cities ---")
+    
+    # Force perfectly deterministic randomness for fair benchmarking
+    import numpy as np
+    import random
+    np.random.seed(42)
+    random.seed(42)
+    
     try:
       problem = SantaProblem(size)
     except Exception as e:
