@@ -1,8 +1,97 @@
 import os
 import sys
 import time
+import numpy as np
+import random
 from src.problem import SantaProblem
 from src.algorithms import hill_climbing, simulated_annealing, genetic_algorithm
+
+def run_experiment(algo_choice, size, num_runs=5):
+  seeds = [10, 20, 30, 40, 50]  # Standardized seeds for fair comparison
+  algo_names = {'1': 'Hill Climbing', '2': 'Simulated Annealing', '3': 'Genetic Algorithm', '4': 'Random Solution'}
+  algo_name = algo_names[algo_choice]
+  
+  results = []
+  print(f"\n--- Starting {num_runs}-Seed Benchmark for {algo_name} on {size} cities ---")
+
+  for i in range(num_runs):
+    seed = seeds[i]
+    print(f"Run {i+1}/{num_runs} (Seed: {seed})...", end=" ", flush=True)
+    
+    np.random.seed(seed)
+    random.seed(seed)
+    
+    try:
+      problem = SantaProblem(size)
+    except Exception as e:
+      print(f"\nError loading dataset: {e}")
+      break
+      
+    initial_state = problem.get_random_solution()
+    initial_dist = problem.calculate_distance(initial_state)
+    
+    start_time = time.time()
+    
+    if algo_choice == '1':
+      final_path = hill_climbing(problem, initial_state)
+    elif algo_choice == '2':
+      final_path = simulated_annealing(problem, initial_state)
+    elif algo_choice == '3':
+      final_path = genetic_algorithm(problem, initial_state)
+    else:
+      final_path = initial_state
+      
+    elapsed = time.time() - start_time
+    
+    if final_path is None:
+      print("Failed.")
+      continue
+      
+    is_valid, _ = problem.validate_path(final_path)
+    if is_valid:
+      final_dist = problem.calculate_distance(final_path)
+      improvement = initial_dist - final_dist
+      pct_improvement = (improvement / initial_dist) * 100
+      
+      results.append({
+        'final': final_dist,
+        'pct': pct_improvement,
+        'time': elapsed,
+        'path': final_path,
+        'problem': problem
+      })
+      print(f"Done! ({pct_improvement:.2f}% improvement in {elapsed:.2f}s)")
+    else:
+      print("Invalid path produced.")
+
+  if results:
+    avg_final = np.mean([r['final'] for r in results])
+    std_final = np.std([r['final'] for r in results])
+    avg_pct = np.mean([r['pct'] for r in results])
+    avg_time = np.mean([r['time'] for r in results])
+    
+    print("\n" + "=" * 50)
+    print(f"  BENCHMARK SUMMARY - {algo_name} ({size} cities)")
+    print("=" * 50)
+    print(f"Average Final Distance: {avg_final:.2f} (± {std_final:.2f})")
+    print(f"Average Improvement Percentage: {avg_pct:.2f}%")
+    print(f"Average Execution Time: {avg_time:.2f}s")
+    print("=" * 50)
+    
+    # Log summary to results.txt
+    with open("results.txt", "a") as f:
+      f.write(f"\n--- BENCHMARK SUMMARY ({algo_name}, {size} cities, {num_runs} seeds) ---\n")
+      f.write(f"Avg Final Distance: {avg_final:.2f} (± {std_final:.2f})\n")
+      f.write(f"Avg Improvement %: {avg_pct:.2f}%\n")
+      f.write(f"Avg Execution Time: {avg_time:.2f}s\n")
+      f.write("-" * 50 + "\n")
+    print(">> Benchmark summary saved to results.txt")
+
+    # Save visualization for the last run if feasible
+    last_run = results[-1]
+    if last_run['problem'].num_cities <= 150000: # allow plotting for all eventually
+       print("\nSaving plot visualization (last run) to 'solution.png'...")
+       last_run['problem'].plot_solution(last_run['path'], title=f"{algo_name} Final Run ({size} cities)")
 
 def run_menu():
   while True:
@@ -14,7 +103,7 @@ def run_menu():
     print("1. Hill Climbing")
     print("2. Simulated Annealing")
     print("3. Genetic Algorithm")
-    print("4. Random Solution")
+    print("4. Random Solution (Baseline)")
     print("0. Exit")
     
     algo_choice = input("\nEnter choice (0-4): ").strip()
@@ -54,81 +143,9 @@ def run_menu():
       
     size = size_map[size_choice]
     
-    print(f"\n--- Loading {size} cities ---")
+    # Run the multi-seed experiment
+    run_experiment(algo_choice, size)
     
-    # Force perfectly deterministic randomness for fair benchmarking
-    import numpy as np
-    import random
-    np.random.seed(42)
-    random.seed(42)
-    
-    try:
-      problem = SantaProblem(size)
-    except Exception as e:
-      print(f"Error loading dataset: {e}")
-      continue
-      
-    # Prepare initial solution
-    initial_state = problem.get_random_solution()
-    initial_val = problem.calculate_distance(initial_state)
-    print(f"Initial Random Distance: {initial_val:.2f}")
-
-    final_path = None
-    start_time = time.time()
-    
-    # run selected algorithm
-    if algo_choice == '1':
-      print("\n--- Running Hill Climbing ---")
-      final_path = hill_climbing(problem, initial_state)
-    
-    elif algo_choice == '2':
-      print("\n--- Running Simulated Annealing ---")
-      final_path = simulated_annealing(problem, initial_state)
-      
-    elif algo_choice == '3':
-      print("\n--- Running Genetic Algorithm ---")
-      final_path = genetic_algorithm(problem, initial_state)
-      
-    elif algo_choice == '4':
-      print("\n--- Running Random Solution ---")
-      final_path = initial_state
-      
-    elapsed = time.time() - start_time
-    
-    if final_path is None:
-      print("No path returned from algorithm. Returning to menu.")
-      continue
-      
-    # validate and print results
-    print("\n--- Results ---")
-    is_valid, message = problem.validate_path(final_path)
-    print(f"Path Validation: {message}")
-
-    if is_valid:
-      final_distance = problem.calculate_distance(final_path)
-      improvement = initial_val - final_distance
-      pct_improvement = (improvement / initial_val) * 100
-      
-      print(f"Final Optimized Distance: {final_distance:.2f} | Time: {elapsed:.2f}s")
-      print(f"Total Improvement: {improvement:.2f} ({pct_improvement:.2f}%)")
-
-      # Log result to results.txt
-      algo_names = {'1': 'Hill Climbing', '2': 'Simulated Annealing', '3': 'Genetic Algorithm', '4': 'Random Solution'}
-      log_line = (
-          f"{algo_names[algo_choice]} | Dataset: {size} "
-          f"| Dist: {final_distance:.2f} | Imprv: {pct_improvement:.2f}% | Time: {elapsed:.2f}s\n"
-      )
-      try:
-        with open("results.txt", "a") as f:
-          f.write(log_line)
-        print(">> Saved metrics to results.txt")
-      except Exception as e:
-        print(f"Failed to log results: {e}")
-
-      print("\nSaving plot visualization to 'solution.png'...")
-      problem.plot_solution(final_path, title=f"{algo_names[algo_choice]} Solution ({size} cities)")
-
-    # wait before menu
     input("\nPress Enter to return to the main menu...")
 
 if __name__ == "__main__":
