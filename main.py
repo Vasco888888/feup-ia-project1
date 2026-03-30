@@ -99,14 +99,17 @@ def run_menu():
 
     if is_valid:
       final_distance = problem.calculate_distance(final_path)
+      improvement = initial_val - final_distance
+      pct_improvement = (improvement / initial_val) * 100
+      
       print(f"Final Optimized Distance: {final_distance:.2f} | Time: {elapsed:.2f}s")
-      print(f"Total Improvement: {initial_val - final_distance:.2f}")
+      print(f"Total Improvement: {improvement:.2f} ({pct_improvement:.2f}%)")
 
       # Log result to results.txt
       algo_names = {'1': 'Hill Climbing', '2': 'Simulated Annealing', '3': 'Genetic Algorithm', '4': 'Random Solution'}
       log_line = (
           f"{algo_names[algo_choice]} | Dataset: {size} "
-          f"| Dist: {final_distance:.2f} | Time: {elapsed:.2f}s\n"
+          f"| Dist: {final_distance:.2f} | Imprv: {pct_improvement:.2f}% | Time: {elapsed:.2f}s\n"
       )
       try:
         with open("results.txt", "a") as f:
