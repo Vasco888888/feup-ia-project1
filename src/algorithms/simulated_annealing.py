@@ -2,12 +2,20 @@ import numpy as np
 import random
 import math
 
-def build_dist_matrix(coords):
-  diff = coords[:, np.newaxis, :] - coords[np.newaxis, :, :]
-  return np.sqrt((diff ** 2).sum(axis=2))
+def get_dist(i, j, problem, dm=None):
+  if dm is not None:
+    return dm[i, j]
+  # On-the-fly calculation
+  c1 = problem.coords[i]
+  c2 = problem.coords[j]
+  return math.sqrt((c1[0] - c2[0])**2 + (c1[1] - c2[1])**2)
 
-def path_length(path, dm):
-  return dm[path, np.roll(path, -1)].sum()
+def calculate_full_path_length(path, problem, dm=None):
+  length = 0
+  n = len(path)
+  for i in range(n):
+    length += get_dist(path[i], path[(i + 1) % n], problem, dm)
+  return length
 
 def edge_set(path):
   n = len(path)
@@ -20,11 +28,21 @@ def simulated_annealing(problem, initial_state=None, initial_temp=10000.0, cooli
   Uses 2-opt moves, ensuring paths remain disjoint.
   """
   print("Simulated Annealing algorithm running...")
-  dm = build_dist_matrix(problem.coords)
+  
+  n = len(problem.coords)
+  # Precompute distance matrix only if memory allows (limit ~5000 cities)
+  dm = None
+  if n <= 5000:
+    print(f"Precomputing distance matrix for {n} cities...")
+    diff = problem.coords[:, np.newaxis, :] - problem.coords[np.newaxis, :, :]
+    dm = np.sqrt((diff ** 2).sum(axis=2))
+  else:
+    print(f"Dataset too large ({n} cities), calculating distances on-the-fly.")
+
   path1, path2 = problem.get_random_solution() if initial_state is None else initial_state
 
-  dist1, dist2 = path_length(path1, dm), path_length(path2, dm)
-  n = len(path1)
+  dist1 = calculate_full_path_length(path1, problem, dm)
+  dist2 = calculate_full_path_length(path2, problem, dm)
   
   if max_iterations_per_temp is None:
     max_iterations_per_temp = min(n * 10, 5000)
@@ -43,6 +61,9 @@ def simulated_annealing(problem, initial_state=None, initial_temp=10000.0, cooli
     for _ in range(max_iterations_per_temp):
       which_path = random.choice([1, 2])
       
+      # For 2-opt, we need at least 4 nodes
+      if n < 4: break
+      
       i = random.randint(0, n - 3)
       j = random.randint(i + 2, n - 1)
       if i == 0 and j == n - 1:
@@ -52,21 +73,22 @@ def simulated_annealing(problem, initial_state=None, initial_temp=10000.0, cooli
         a, b = path1[i], path1[i + 1]
         c, d = path1[j], path1[(j + 1) % n]
         
+        # Check if new edges (a,c) and (b,d) conflict with path2
         if (min(a, c), max(a, c)) in edges2 or (min(b, d), max(b, d)) in edges2:
           continue
           
-        delta = (dm[a, c] + dm[b, d]) - (dm[a, b] + dm[c, d])
+        delta = (get_dist(a, c, problem, dm) + get_dist(b, d, problem, dm)) - \
+                (get_dist(a, b, problem, dm) + get_dist(c, d, problem, dm))
         new_dist1 = dist1 + delta
         new_dist2 = dist2
         new_obj = max(new_dist1, new_dist2)
         
-        # If delta is large enough to cause exp overflow or extremely small, we safeguard it
         if new_obj < current_obj:
           accept = True
         else:
           try:
             accept = math.exp((current_obj - new_obj) / T) > random.random()
-          except OverflowError:
+          except (OverflowError, ZeroDivisionError):
             accept = False
             
         if accept:
@@ -89,7 +111,8 @@ def simulated_annealing(problem, initial_state=None, initial_temp=10000.0, cooli
         if (min(a, c), max(a, c)) in edges1 or (min(b, d), max(b, d)) in edges1:
           continue
           
-        delta = (dm[a, c] + dm[b, d]) - (dm[a, b] + dm[c, d])
+        delta = (get_dist(a, c, problem, dm) + get_dist(b, d, problem, dm)) - \
+                (get_dist(a, b, problem, dm) + get_dist(c, d, problem, dm))
         new_dist1 = dist1
         new_dist2 = dist2 + delta
         new_obj = max(new_dist1, new_dist2)
@@ -99,7 +122,7 @@ def simulated_annealing(problem, initial_state=None, initial_temp=10000.0, cooli
         else:
           try:
             accept = math.exp((current_obj - new_obj) / T) > random.random()
-          except OverflowError:
+          except (OverflowError, ZeroDivisionError):
             accept = False
             
         if accept:
@@ -119,7 +142,6 @@ def simulated_annealing(problem, initial_state=None, initial_temp=10000.0, cooli
     T *= cooling_rate
     iteration += 1
     
-    # Print progress every few temperature drops
     if iteration % 100 == 0:
       print(f"Temperature: {T:.4f} | Best Max Distance: {best_obj:.2f}")
     

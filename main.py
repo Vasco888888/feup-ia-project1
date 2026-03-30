@@ -47,13 +47,12 @@ def run_menu():
       
     size = size_map[size_choice]
     
-    # Hill Climbing is O(n^2) per iteration — warn for large datasets
+    # Hill Climbing is O(n^2) per iteration — block large datasets
     if algo_choice == '1' and size_choice in ('4', '5'):
-      print(f"\n[WARNING] Hill Climbing is not practical for {size} cities.")
-      print("It scans all O(n²) 2-opt neighbors each iteration and will be extremely slow.")
-      confirm = input("Continue anyway? (y/N): ").strip().lower()
-      if confirm != 'y':
-        continue
+      print(f"\n[ERROR] Hill Climbing cannot practically solve {size} cities.")
+      print("It evaluates O(n²) 2-opt neighbors per iteration, which would take years to complete.")
+      print("Please use Simulated Annealing for datasets of this scale.")
+      continue
 
     print(f"\n--- Loading {size} cities ---")
     try:
@@ -116,9 +115,8 @@ def run_menu():
       except Exception as e:
         print(f"Failed to log results: {e}")
 
-      if problem.num_cities <= 1000:
-        print("\nSaving plot visualization to 'solution.png'...")
-        problem.plot_solution(final_path, title=f"{algo_names[algo_choice]} Solution ({size} cities)")
+      print("\nSaving plot visualization to 'solution.png'...")
+      problem.plot_solution(final_path, title=f"{algo_names[algo_choice]} Solution ({size} cities)")
 
     # wait before menu
     input("\nPress Enter to return to the main menu...")
