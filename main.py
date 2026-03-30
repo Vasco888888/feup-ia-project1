@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from src.problem import SantaProblem
 from src.algorithms import hill_climbing, simulated_annealing, genetic_algorithm
 
@@ -46,6 +47,14 @@ def run_menu():
       
     size = size_map[size_choice]
     
+    # Hill Climbing is O(n^2) per iteration — warn for large datasets
+    if algo_choice == '1' and size_choice in ('4', '5'):
+      print(f"\n[WARNING] Hill Climbing is not practical for {size} cities.")
+      print("It scans all O(n²) 2-opt neighbors each iteration and will be extremely slow.")
+      confirm = input("Continue anyway? (y/N): ").strip().lower()
+      if confirm != 'y':
+        continue
+
     print(f"\n--- Loading {size} cities ---")
     try:
       problem = SantaProblem(size)
@@ -59,6 +68,7 @@ def run_menu():
     print(f"Initial Random Distance: {initial_val:.2f}")
 
     final_path = None
+    start_time = time.time()
     
     # run selected algorithm
     if algo_choice == '1':
@@ -77,6 +87,8 @@ def run_menu():
       print("\n--- Running Random Solution ---")
       final_path = initial_state
       
+    elapsed = time.time() - start_time
+    
     if final_path is None:
       print("No path returned from algorithm. Returning to menu.")
       continue
@@ -88,15 +100,29 @@ def run_menu():
 
     if is_valid:
       final_distance = problem.calculate_distance(final_path)
-      print(f"Final Optimized Distance: {final_distance:.2f}")
+      print(f"Final Optimized Distance: {final_distance:.2f} | Time: {elapsed:.2f}s")
       print(f"Total Improvement: {initial_val - final_distance:.2f}")
 
-      print("\nSaving plot visualization to 'solution.png'...")
+      # Log result to results.txt
       algo_names = {'1': 'Hill Climbing', '2': 'Simulated Annealing', '3': 'Genetic Algorithm', '4': 'Random Solution'}
-      problem.plot_solution(final_path, title=f"{algo_names[algo_choice]} Solution ({size} cities)")
+      log_line = (
+          f"{algo_names[algo_choice]} | Dataset: {size} "
+          f"| Dist: {final_distance:.2f} | Time: {elapsed:.2f}s\n"
+      )
+      try:
+          with open("results.txt", "a") as f:
+              f.write(log_line)
+          print(">> Saved metrics to results.txt")
+      except Exception as e:
+          print(f"Failed to log results: {e}")
+
+      if problem.num_cities <= 1000:
+        print("\nSaving plot visualization to 'solution.png'...")
+        problem.plot_solution(final_path, title=f"{algo_names[algo_choice]} Solution ({size} cities)")
 
     # wait before menu
     input("\nPress Enter to return to the main menu...")
 
 if __name__ == "__main__":
   run_menu()
+
