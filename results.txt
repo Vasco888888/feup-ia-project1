@@ -13,43 +13,31 @@ Hill Climbing | Dataset: 10 | Env: Steepest Ascent (2-opt) | Dist: 391.81 | Time
 Hill Climbing | Dataset: 100 | Env: Steepest Ascent (2-opt) | Dist: 10329.58 | Time: 14.36s
 
 --- BENCHMARK SUMMARY (Genetic Algorithm, 10 cities, 5 seeds) ---
-Avg Final Distance: 386.25 (± 11.86)
-Avg Improvement %: 24.70%
-Avg Execution Time: 1.50s
+Avg Final Distance: 382.88 (± 5.96)
+Avg Improvement %: 26.69%
+Avg Execution Time: 2.31s
 --------------------------------------------------
 
 --- BENCHMARK SUMMARY (Genetic Algorithm, 100 cities, 5 seeds) ---
-Avg Final Distance: 36820.19 (± 0.00)
-Avg Improvement %: 36.69%
-Avg Execution Time: 11.80s
+Avg Final Distance: 40545.46 (± 2776.90)
+Avg Improvement %: 27.03%
+Avg Execution Time: 32.50s
 --------------------------------------------------
 
---- BENCHMARK SUMMARY (Genetic Algorithm, 1000 cities, 5 seeds) ---
-Avg Final Distance: 488449.12 (± 0.00)
-Avg Improvement %: 9.72%
-Avg Execution Time: 438.68s
+--- BENCHMARK SUMMARY (Genetic Algorithm, 1000 cities, 3 seeds) ---
+Avg Final Distance: 476968.37 (± 3967.20)
+Avg Improvement %: 9.93%
+Avg Execution Time: 16.64s
 --------------------------------------------------
 
---- BENCHMARK SUMMARY (Hill Climbing, 10 cities, 5 seeds) ---
-Avg Final Distance: 383.96 (± 11.71)
-Avg Improvement %: 26.54%
-Avg Execution Time: 0.00s
+--- BENCHMARK SUMMARY (Genetic Algorithm, 10000 cities, 2 seeds) ---
+Avg Final Distance: 5163419.63 (± 6504.07)
+Avg Improvement %: 1.66%
+Avg Execution Time: 50.13s
 --------------------------------------------------
 
---- BENCHMARK SUMMARY (Simulated Annealing, 10 cities, 5 seeds) ---
-Avg Final Distance: 353.40 (± 4.18)
-Avg Improvement %: 32.39%
-Avg Execution Time: 0.50s
---------------------------------------------------
-
---- BENCHMARK SUMMARY (Genetic Algorithm, 10 cities, 5 seeds) ---
-Avg Final Distance: 377.63 (± 15.60)
-Avg Improvement %: 27.08%
-Avg Execution Time: 1.35s
---------------------------------------------------
-
---- BENCHMARK SUMMARY (Genetic Algorithm, 10 cities, 5 seeds) ---
-Avg Final Distance: 361.85 (± 7.10)
-Avg Improvement %: 29.63%
-Avg Execution Time: 2.16s
+--- BENCHMARK SUMMARY (Genetic Algorithm, 150000 cities, 1 seeds) ---
+Avg Final Distance: 1289172087.23 (± 0.00)
+Avg Improvement %: 0.31%
+Avg Execution Time: 126.95s
 --------------------------------------------------

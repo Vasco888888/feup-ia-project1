@@ -79,11 +79,20 @@ class SantaProblem:
     
     ordered_coords2 = self.coords[path2]
     loop_coords2 = np.vstack([ordered_coords2, self.coords[path2[0]]])
+
+    if self.num_cities > 10000:
+      scatter_size = 1
+      line_width = 0.5
+      alpha = 0.4
+    else:
+      scatter_size = 10
+      line_width = 1.2
+      alpha = 0.6
     
     plt.figure(figsize=(10, 8))
-    plt.plot(loop_coords1[:, 0], loop_coords1[:, 1], 'b-', alpha=0.6, label='Path 1')
-    plt.plot(loop_coords2[:, 0], loop_coords2[:, 1], 'g-', alpha=0.6, label='Path 2')
-    plt.scatter(self.coords[:, 0], self.coords[:, 1], c='red', s=10, label='Cities')
+    plt.plot(loop_coords1[:, 0], loop_coords1[:, 1], 'b-', alpha=alpha, linewidth=line_width, label='Path 1')
+    plt.plot(loop_coords2[:, 0], loop_coords2[:, 1], 'g-', alpha=alpha, linewidth=line_width, label='Path 2')
+    plt.scatter(self.coords[:, 0], self.coords[:, 1], c='red', s=scatter_size, label='Cities')
     
     dist1 = self._path_distance(path1)
     dist2 = self._path_distance(path2)
@@ -93,6 +102,7 @@ class SantaProblem:
     plt.ylabel("Y Coordinate")
     plt.legend()
     plt.grid(True)
+    plt.tight_layout()
     plt.savefig('solution.png')
     print(f"Plot saved to solution.png")
     plt.close()
