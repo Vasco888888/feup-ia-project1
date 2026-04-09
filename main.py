@@ -120,7 +120,9 @@ def run_menu():
     print("1. 10 cities")
     print("2. 100 cities")
     print("3. 1000 cities")
-    if algo_choice != '1':
+    if algo_choice == '3':
+      print("4. 10000 cities")
+    elif algo_choice != '1':
       print("4. 10000 cities")
       print("5. 150000 cities")
     print("0. Back to algorithms")
