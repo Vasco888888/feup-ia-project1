@@ -1,14 +1,17 @@
 import time
 import numpy as np
 
+# Threshold to switch between slow/robust repair and fast mathematical repair
 FAST_DISJOINT_THRESHOLD = 1_000
 
 def _build_dist_matrix(coords: np.ndarray) -> np.ndarray:
+    """Vectorized calculation of N x N distance matrix."""
     diff = coords[:, np.newaxis, :] - coords[np.newaxis, :, :]
     return np.sqrt((diff ** 2).sum(axis=2))
 
 
 def _path_length_dm(path: np.ndarray, dm, coords=None) -> float:
+    """Calculates path length using precomputed matrix or on-the-fly math."""
     if dm is not None:
         return float(dm[path, np.roll(path, -1)].sum())
     ordered = coords[path]
@@ -17,10 +20,16 @@ def _path_length_dm(path: np.ndarray, dm, coords=None) -> float:
 
 
 def _fitness(ind: tuple, dm, coords=None) -> float:
+    """Objective function: Minimize the maximum distance of the two paths."""
     return max(_path_length_dm(ind[0], dm, coords), _path_length_dm(ind[1], dm, coords))
 
 
 def _find_coprime_step(n: int) -> int:
+    """
+    Finds a step 'k' such that gcd(k, n) = 1.
+    This ensures that traversing n items by step k creates a full cycle.
+    Used for rapid generation of disjoint Hamiltonian cycles.
+    """
     if n < 5:
         return 1
 
@@ -35,6 +44,10 @@ def _find_coprime_step(n: int) -> int:
 
 
 def _build_disjoint_cycle_by_step(path1: np.ndarray) -> np.ndarray:
+    """
+    Creates a new cycle using the coprime step trick. 
+    Indices i and i+1 in path2 will correspond to indices separated by step k in path1.
+    """
     n = len(path1)
     if n < 5:
         return path1.copy()
@@ -45,6 +58,10 @@ def _build_disjoint_cycle_by_step(path1: np.ndarray) -> np.ndarray:
 
 
 def _build_disjoint_path(path1: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """
+    Constructs a second path guaranteed to share no edges with the first.
+    Uses a fast mathematical approach for large N and a randomized repair for small N.
+    """
     n = len(path1)
     if n >= FAST_DISJOINT_THRESHOLD:
         return _build_disjoint_cycle_by_step(path1)
@@ -72,12 +89,14 @@ def _build_disjoint_path(path1: np.ndarray, rng: np.random.Generator) -> np.ndar
 
 
 def _edge_set(path: np.ndarray) -> set:
+    """Helper to convert a path to a set of undirected edges."""
     n = len(path)
     return {(min(path[i], path[(i + 1) % n]), max(path[i], path[(i + 1) % n]))
             for i in range(n)}
 
 
 def _shared_edges(path2: np.ndarray, edges1: set) -> list:
+    """Returns a list of indices where path2 sharing edges with edges1."""
     n = len(path2)
     result = []
     for i in range(n):
@@ -89,10 +108,15 @@ def _shared_edges(path2: np.ndarray, edges1: set) -> list:
 
 
 def _is_disjoint(path1: np.ndarray, path2: np.ndarray) -> bool:
+    """Checks if two paths share any common edges."""
     return len(_shared_edges(path2, _edge_set(path1))) == 0
 
 
 def _repair_disjoint_path(path1: np.ndarray, path2: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """
+    Repairs a broken disjoint constraint after crossover or mutation.
+    Tries 2-opt search first, falling back to coprime step if needed.
+    """
     if _is_disjoint(path1, path2):
         return path2
 
@@ -122,6 +146,7 @@ def _repair_disjoint_path(path1: np.ndarray, path2: np.ndarray, rng: np.random.G
 
 
 def _ox_crossover(p1: np.ndarray, p2: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """Order Crossover (OX) for TSP: preserves relative city orders from both parents."""
     n = len(p1)
     a, b = sorted(rng.choice(n, 2, replace=False))
     child = np.full(n, -1, dtype=int)
@@ -137,6 +162,7 @@ def _ox_crossover(p1: np.ndarray, p2: np.ndarray, rng: np.random.Generator) -> n
 
 
 def _crossover(par1: tuple, par2: tuple, rng: np.random.Generator) -> tuple:
+    """Performs crossover on both paths and repairs the resulting individual."""
     child_p1 = _ox_crossover(par1[0], par2[0], rng)
     child_p2_candidate = _ox_crossover(par1[1], par2[1], rng)
     child_p2 = _repair_disjoint_path(child_p1, child_p2_candidate, rng)
@@ -144,6 +170,7 @@ def _crossover(par1: tuple, par2: tuple, rng: np.random.Generator) -> tuple:
 
 
 def _two_opt_move(path: np.ndarray, rng: np.random.Generator) -> np.ndarray:
+    """Simple 2-opt reversal for mutation or repair."""
     n = len(path)
     i, j = sorted(rng.choice(n, 2, replace=False))
     new_path = path.copy()
@@ -152,6 +179,7 @@ def _two_opt_move(path: np.ndarray, rng: np.random.Generator) -> np.ndarray:
 
 
 def _mutate(ind: tuple, mutation_rate: float, rng: np.random.Generator) -> tuple:
+    """Mutates one or both paths and ensures the final individual is valid."""
     path1, path2 = ind
     mutated_p1 = rng.random() < mutation_rate
     mutated_p2 = rng.random() < mutation_rate
@@ -169,18 +197,16 @@ def _mutate(ind: tuple, mutation_rate: float, rng: np.random.Generator) -> tuple
     return (path1, path2)
 
 
-def _tournament_select(
-    population: list,
-    fitnesses: np.ndarray,
-    k: int,
-    rng: np.random.Generator,
-) -> tuple:
+def _tournament_select(population: list, fitnesses: np.ndarray, k: int, rng: np.random.Generator) -> tuple:
+    """Standard tournament selection: picks the best from k random contestants."""
     k = min(k, len(population))
     contestants = rng.choice(len(population), k, replace=False)
     winner = contestants[int(np.argmin(fitnesses[contestants]))]
     return population[winner]
 
+
 def _scale_params(num_cities: int):
+    """Dynamically chooses population and generation sizes based on problem complexity."""
     if num_cities <= 100:
         return 60, 300, 60
     elif num_cities <= 1_000:
@@ -190,46 +216,34 @@ def _scale_params(num_cities: int):
     else:
         return 10, 30, 15
 
-def genetic_algorithm(
-    problem,
-    initial_state,
-    population_size: int = None,
-    generations: int = None,
-    mutation_rate: float = 0.2,
-    crossover_rate: float = 0.85,
-    elitism: int = 2,
-    tournament_k: int = 3,
-    stagnation_limit: int = None,
-    seed: int = None,
-    max_runtime_s: float = None,
-) -> tuple:
+
+def genetic_algorithm(problem, initial_state, population_size: int = None, generations: int = None, mutation_rate: float = 0.2, crossover_rate: float = 0.85, elitism: int = 2, tournament_k: int = 3, stagnation_limit: int = None, seed: int = None, max_runtime_s: float = None) -> tuple:
     """
-    Genetic Algorithm for the Santa 2012 dual-path TSP problem.
+    Genetic Algorithm for the Santa 2012 Dual-Path TSP.
+    
+    Approach:
+    - Representation: Tuple of two paths (ndarrays).
+    - Crossover: Order Crossover (OX) with disjoint constraint repair.
+    - Mutation: 2-opt swap of one path followed by constraint repair.
+    - Performance: adaptive scaling based on num_cities.
     """
     rng = np.random.default_rng(seed)
 
     pop_auto, gen_auto, stag_auto = _scale_params(problem.num_cities)
-    if population_size is None:
-        population_size = pop_auto
-    if generations is None:
-        generations = gen_auto
-    if stagnation_limit is None:
-        stagnation_limit = stag_auto
+    if population_size is None: population_size = pop_auto
+    if generations is None: generations = gen_auto
+    if stagnation_limit is None: stagnation_limit = stag_auto
 
     if max_runtime_s is None:
-        if problem.num_cities >= 10_000:
-            max_runtime_s = 120.0
-        elif problem.num_cities >= 1_000:
-            max_runtime_s = 90.0
+        if problem.num_cities >= 10_000: max_runtime_s = 120.0
+        elif problem.num_cities >= 1_000: max_runtime_s = 90.0
 
     print("Genetic Algorithm running...")
 
     coords = problem.coords
-    if problem.num_cities <= 5_000:
-        dm = _build_dist_matrix(coords)
-    else:
-        dm = None
+    dm = _build_dist_matrix(coords) if problem.num_cities <= 5_000 else None
 
+    # INITIALIZATION: Build population ensuring all individuals are valid
     population: list[tuple] = [initial_state]
     for _ in range(population_size - 1):
         p1 = rng.permutation(problem.num_cities)
@@ -240,15 +254,14 @@ def genetic_algorithm(
 
     fitnesses = np.array([_fitness(ind, dm, coords) for ind in population])
 
-    best_idx = int(np.argmin(fitnesses))
-    best_ind = population[best_idx]
-    best_fit = fitnesses[best_idx]
+    best_fit = fitnesses[np.argmin(fitnesses)]
+    best_ind = population[np.argmin(fitnesses)]
     stagnation = 0
     ga_start_time = time.time()
     progress_every = max(1, generations // 5)
 
     for gen in range(1, generations + 1):
-
+        # ELITISM: Port over the best n individuals directly
         order = np.argsort(fitnesses)
         elite_inds = [(population[i][0].copy(), population[i][1].copy()) for i in order[:elitism]]
         elite_fits = fitnesses[order[:elitism]]
@@ -256,6 +269,7 @@ def genetic_algorithm(
         new_population: list[tuple] = elite_inds
         new_fitnesses: list[float] = list(elite_fits)
 
+        # REPRODUCTION: Crossover and Mutation
         while len(new_population) < population_size:
             p1 = _tournament_select(population, fitnesses, tournament_k, rng)
             if rng.random() < crossover_rate:
@@ -271,28 +285,25 @@ def genetic_algorithm(
         population = new_population
         fitnesses = np.array(new_fitnesses)
 
-        gen_best_idx = int(np.argmin(fitnesses))
-        gen_best_fit = fitnesses[gen_best_idx]
-
+        # TRACK PROGRESS
+        gen_best_fit = fitnesses[np.argmin(fitnesses)]
         if gen_best_fit < best_fit:
             best_fit = gen_best_fit
-            best_ind = population[gen_best_idx]
+            best_ind = population[np.argmin(fitnesses)]
             stagnation = 0
         else:
             stagnation += 1
 
-        if stagnation >= stagnation_limit:
-            break
+        if stagnation >= stagnation_limit: break
 
         if problem.num_cities >= 1_000 and (gen == 1 or gen % progress_every == 0):
             print(f"  [GA] gen={gen}/{generations} best={best_fit:.2f} stagnation={stagnation}")
 
-        if max_runtime_s is not None:
-            now_s = time.time()
-            if now_s - ga_start_time >= max_runtime_s:
-                print(f"  [GA] runtime limit reached ({max_runtime_s:.0f}s), returning best-so-far.")
-                break
+        if max_runtime_s is not None and (time.time() - ga_start_time >= max_runtime_s):
+            print(f"  [GA] runtime limit reached ({max_runtime_s:.0f}s), returning best.")
+            break
 
+    # Final sanity repair
     best_p1, best_p2 = best_ind
     if not _is_disjoint(best_p1, best_p2):
         best_p2 = _repair_disjoint_path(best_p1, best_p2, rng)
