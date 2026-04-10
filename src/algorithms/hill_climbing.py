@@ -65,3 +65,5 @@ def hill_climbing(problem, initial_state=None):
       path2 = path2.copy()
       path2[i + 1:j + 1] = path2[i + 1:j + 1][::-1]
       dist2 += delta
+
+    print(f"  [HC] Best Max Distance: {best_obj:.2f}")

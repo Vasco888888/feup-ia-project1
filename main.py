@@ -73,7 +73,7 @@ def run_experiment(algo_choice, size, num_runs=5):
     print("\n" + "=" * 50)
     print(f"  BENCHMARK SUMMARY - {algo_name} ({size} cities)")
     print("=" * 50)
-    print(f"Average Final Distance: {avg_final:.2f} (± {std_final:.2f})")
+    print(f"Average Final Distance: {avg_final:.2f} (+- {std_final:.2f})")
     print(f"Average Improvement Percentage: {avg_pct:.2f}%")
     print(f"Average Execution Time: {avg_time:.2f}s")
     print("=" * 50)

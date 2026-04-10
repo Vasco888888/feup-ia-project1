@@ -143,6 +143,6 @@ def simulated_annealing(problem, initial_state=None, initial_temp=10000.0, cooli
     iteration += 1
     
     if iteration % 100 == 0:
-      print(f"Temperature: {T:.4f} | Best Max Distance: {best_obj:.2f}")
+      print(f"  [SA] Temperature: {T:.4f} | Best Max Distance: {best_obj:.2f}")
     
   return best_path1, best_path2
