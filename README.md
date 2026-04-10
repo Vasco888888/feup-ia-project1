@@ -4,8 +4,6 @@ This project implements various optimization algorithms to solve the **Santa 201
 
 The goal is to help Santa deliver toys to 150,000 cities by finding two disjoint Hamiltonian cycles that minimize the maximum length of the two paths.
 
-![Traveling Santa Solution](solution.png)
-
 ## Features
 
 - **Hill Climbing**: Local search algorithm for quick improvements.
