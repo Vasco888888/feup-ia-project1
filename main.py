@@ -11,20 +11,6 @@ def run_experiment(algo_choice, size, num_runs=5):
   algo_names = {'1': 'Hill Climbing', '2': 'Simulated Annealing', '3': 'Genetic Algorithm', '4': 'Random Solution'}
   algo_name = algo_names[algo_choice]
 
-  if algo_choice == '3' and int(size) > 10000:
-    # Keep very large GA runs practical by default.
-    seeds = [10]
-    num_runs = 1
-    print("\n[Info] Large GA instance detected (150000 cities): quality mode enabled, running 1 seed for practicality.")
-  elif algo_choice == '3' and int(size) >= 10000:
-    seeds = [10, 20]
-    num_runs = 2
-    print("\n[Info] Large GA instance detected (10000 cities): running 2 seeds for practicality.")
-  elif algo_choice == '3' and int(size) >= 1000:
-    seeds = [10, 20, 30]
-    num_runs = 3
-    print("\n[Info] Mid-large GA instance detected (1000 cities): running 3 seeds for practicality.")
-  
   results = []
   print(f"\n--- Starting {num_runs}-Seed Benchmark for {algo_name} on {size} cities ---")
 
