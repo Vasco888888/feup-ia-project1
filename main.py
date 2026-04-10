@@ -118,21 +118,22 @@ def run_menu():
     print("\nSelect Dataset Size:")
     print("1. 10 cities")
     print("2. 100 cities")
-    print("3. 1000 cities")
-    if algo_choice == '3':
-      print("4. 10000 cities")
-      print("5. 150000 cities (slower)")
-    elif algo_choice != '1':
-      print("4. 10000 cities")
-      print("5. 150000 cities")
+    if algo_choice != '1':
+      print("3. 1000 cities")
+      if algo_choice == '3':
+        print("4. 10000 cities")
+        print("5. 150000 cities (slower)")
+      else:
+        print("4. 10000 cities")
+        print("5. 150000 cities")
     print("0. Back to algorithms")
     
-    size_map = {'1': '10', '2': '100', '3': '1000'}
+    size_map = {'1': '10', '2': '100'}
     if algo_choice != '1':
-      size_map.update({'4': '10000', '5': '150000'})
+      size_map.update({'3': '1000', '4': '10000', '5': '150000'})
       prompt = "\nEnter choice (0-5): "
     else:
-      prompt = "\nEnter choice (0-3): "
+      prompt = "\nEnter choice (0-2): "
 
     size_choice = input(prompt).strip()
     
