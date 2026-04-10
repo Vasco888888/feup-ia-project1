@@ -59,11 +59,10 @@ The project features a console-based interactive menu for easy benchmarking.
     - `genetic_algorithm.py`
 - `data/`: CSV datasets for different city counts.
 
-## Authors
+## Credits
 
-**Group 58 - FEUP 2025/2026**
-*Inteligência Artificial (Artificial Intelligence)*
+Developed by **Group 58** for the **Inteligência Artificial (IA)** course at **FEUP** (2025/2026).
 
-- **Ana Silva** - [up202308786@up.pt](mailto:up202308786@up.pt)
-- **Mário Pereira** - [up202304965@up.pt](mailto:up202304965@up.pt)
-- **Vasco Sá** - [up202306731@up.pt](mailto:up202306731@up.pt)
+- Ana Silva up202308786
+- Mário Pereira up202304965
+- Vasco Sá up202306731
