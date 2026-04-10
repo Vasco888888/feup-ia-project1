@@ -10,6 +10,20 @@ def run_experiment(algo_choice, size, num_runs=5):
   seeds = [10, 20, 30, 40, 50]  # Standardized seeds for fair comparison
   algo_names = {'1': 'Hill Climbing', '2': 'Simulated Annealing', '3': 'Genetic Algorithm', '4': 'Random Solution'}
   algo_name = algo_names[algo_choice]
+
+  if algo_choice == '3' and int(size) > 10000:
+    # Keep very large GA runs practical by default.
+    seeds = [10]
+    num_runs = 1
+    print("\n[Info] Large GA instance detected (150000 cities): quality mode enabled, running 1 seed for practicality.")
+  elif algo_choice == '3' and int(size) >= 10000:
+    seeds = [10, 20]
+    num_runs = 2
+    print("\n[Info] Large GA instance detected (10000 cities): running 2 seeds for practicality.")
+  elif algo_choice == '3' and int(size) >= 1000:
+    seeds = [10, 20, 30]
+    num_runs = 3
+    print("\n[Info] Mid-large GA instance detected (1000 cities): running 3 seeds for practicality.")
   
   results = []
   print(f"\n--- Starting {num_runs}-Seed Benchmark for {algo_name} on {size} cities ---")
@@ -87,11 +101,10 @@ def run_experiment(algo_choice, size, num_runs=5):
       f.write("-" * 50 + "\n")
     print(">> Benchmark summary saved to results.txt")
 
-    # Save visualization for the last run if feasible
+    # Save visualization for the last run (large sizes are adaptively downsampled in plot_solution)
     last_run = results[-1]
-    if last_run['problem'].num_cities <= 150000: # allow plotting for all eventually
-       print("\nSaving plot visualization (last run) to 'solution.png'...")
-       last_run['problem'].plot_solution(last_run['path'], title=f"{algo_name} Final Run ({size} cities)")
+    print("\nSaving plot visualization (last run) to 'solution.png'...")
+    last_run['problem'].plot_solution(last_run['path'], title=f"{algo_name} Final Run ({size} cities)")
 
 def run_menu():
   while True:
@@ -120,7 +133,10 @@ def run_menu():
     print("1. 10 cities")
     print("2. 100 cities")
     print("3. 1000 cities")
-    if algo_choice != '1':
+    if algo_choice == '3':
+      print("4. 10000 cities")
+      print("5. 150000 cities (slower)")
+    elif algo_choice != '1':
       print("4. 10000 cities")
       print("5. 150000 cities")
     print("0. Back to algorithms")
