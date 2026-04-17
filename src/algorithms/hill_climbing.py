@@ -1,83 +1,83 @@
 import numpy as np
 
 def build_dist_matrix(coords):
-  """Vectorized Euclidean distance matrix calculation."""
-  diff = coords[:, np.newaxis, :] - coords[np.newaxis, :, :]
-  return np.sqrt((diff ** 2).sum(axis=2))
+ """Vectorized Euclidean distance matrix calculation."""
+ diff = coords[:, np.newaxis, :] - coords[np.newaxis, :, :]
+ return np.sqrt((diff ** 2).sum(axis=2))
 
 def path_length(path, dm):
-  """Calculates total cycle length using the precomputed distance matrix."""
-  return dm[path, np.roll(path, -1)].sum()
+ """Calculates total cycle length using the precomputed distance matrix."""
+ return dm[path, np.roll(path, -1)].sum()
 
 def edge_set(path):
-  """Converts path to a set of sorted edge tuples for disjointness checks."""
-  n = len(path)
-  return {(min(path[i], path[(i+1) % n]), max(path[i], path[(i+1) % n])) for i in range(n)}
+ """Converts path to a set of sorted edge tuples for disjointness checks."""
+ n = len(path)
+ return {(min(path[i], path[(i+1) % n]), max(path[i], path[(i+1) % n])) for i in range(n)}
 
 def hill_climbing(problem, initial_state=None):
-  """
-  Hill Climbing algorithm for the Santa 2012 TSP.
-  Uses a steepest-ascent 2-opt search until a local optimum is reached.
-  
-  Approach:
-  - Global Search: Evaluates all possible 2-opt swaps.
-  - Hard Constraint: Skips moves that break path disjointness.
-  """
-  print("Hill Climbing algorithm running...")
-  
-  dm = build_dist_matrix(problem.coords)
-  path1, path2 = problem.get_random_solution() if initial_state is None else initial_state
+ """
+ Hill Climbing algorithm for the Santa 2012 TSP.
+ Uses a steepest-ascent 2-opt search until a local optimum is reached.
+ 
+ Approach:
+ - Global Search: Evaluates all possible 2-opt swaps.
+ - Hard Constraint: Skips moves that break path disjointness.
+ """
+ print("Hill Climbing algorithm running...")
+ 
+ dm = build_dist_matrix(problem.coords)
+ path1, path2 = problem.get_random_solution() if initial_state is None else initial_state
 
-  dist1, dist2 = path_length(path1, dm), path_length(path2, dm)
-  n = len(path1)
+ dist1, dist2 = path_length(path1, dm), path_length(path2, dm)
+ n = len(path1)
 
-  while True:
-    edges1, edges2 = edge_set(path1), edge_set(path2)
-    best_obj = max(dist1, dist2)
-    best_move = None               # (i, j, which, delta)
+ while True:
+  edges1, edges2 = edge_set(path1), edge_set(path2)
+  best_obj = max(dist1, dist2)
+  best_move = None               # (i, j, which, delta)
 
-    # 2-opt moves on path1: O(N^2) neighborhood search
-    for i in range(n - 1):
-      for j in range(i + 2, n):
-        a, b = path1[i], path1[i + 1]
-        c, d = path1[j], path1[(j + 1) % n]
-        
-        # Ensure the move doesn't collide with the other path's edges
-        if (min(a, c), max(a, c)) in edges2 or (min(b, d), max(b, d)) in edges2:
-          continue
-          
-        delta = (dm[a, c] + dm[b, d]) - (dm[a, b] + dm[c, d])
-        new_obj = max(dist1 + delta, dist2)
-        if new_obj < best_obj:
-          best_obj, best_move = new_obj, (i, j, 'p1', delta)
+  # 2-opt moves on path1: O(N^2) neighborhood search
+  for i in range(n - 1):
+   for j in range(i + 2, n):
+    a, b = path1[i], path1[i + 1]
+    c, d = path1[j], path1[(j + 1) % n]
+    
+    # Ensure the move doesn't collide with the other path's edges
+    if (min(a, c), max(a, c)) in edges2 or (min(b, d), max(b, d)) in edges2:
+     continue
+     
+    delta = (dm[a, c] + dm[b, d]) - (dm[a, b] + dm[c, d])
+    new_obj = max(dist1 + delta, dist2)
+    if new_obj < best_obj:
+     best_obj, best_move = new_obj, (i, j, 'p1', delta)
 
-    # 2-opt moves on path2
-    for i in range(n - 1):
-      for j in range(i + 2, n):
-        a, b = path2[i], path2[i + 1]
-        c, d = path2[j], path2[(j + 1) % n]
-        
-        if (min(a, c), max(a, c)) in edges1 or (min(b, d), max(b, d)) in edges1:
-          continue
-          
-        delta = (dm[a, c] + dm[b, d]) - (dm[a, b] + dm[c, d])
-        new_obj = max(dist1, dist2 + delta)
-        if new_obj < best_obj:
-          best_obj, best_move = new_obj, (i, j, 'p2', delta)
+  # 2-opt moves on path2
+  for i in range(n - 1):
+   for j in range(i + 2, n):
+    a, b = path2[i], path2[i + 1]
+    c, d = path2[j], path2[(j + 1) % n]
+    
+    if (min(a, c), max(a, c)) in edges1 or (min(b, d), max(b, d)) in edges1:
+     continue
+     
+    delta = (dm[a, c] + dm[b, d]) - (dm[a, b] + dm[c, d])
+    new_obj = max(dist1, dist2 + delta)
+    if new_obj < best_obj:
+     best_obj, best_move = new_obj, (i, j, 'p2', delta)
 
-    # Termination: stop if no single move found in the neighborhood improves the max distance
-    if best_move is None:
-      return path1, path2
+  # Termination: stop if no single move found in the neighborhood improves the max distance
+  if best_move is None:
+   return path1, path2
 
-    # Execute the best discovered move
-    i, j, which, delta = best_move
-    if which == 'p1':
-      path1 = path1.copy()
-      path1[i + 1:j + 1] = path1[i + 1:j + 1][::-1]
-      dist1 += delta
-    else:
-      path2 = path2.copy()
-      path2[i + 1:j + 1] = path2[i + 1:j + 1][::-1]
-      dist2 += delta
+  # Execute the best discovered move
+  i, j, which, delta = best_move
+  if which == 'p1':
+   path1 = path1.copy()
+   path1[i + 1:j + 1] = path1[i + 1:j + 1][::-1]
+   dist1 += delta
+  else:
+   path2 = path2.copy()
+   path2[i + 1:j + 1] = path2[i + 1:j + 1][::-1]
+   dist2 += delta
 
-    print(f"  [HC] Best Max Distance: {best_obj:.2f}")
+  print(f"  [HC] Best Max Distance: {best_obj:.2f}")
