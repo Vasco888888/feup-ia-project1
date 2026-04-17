@@ -68,4 +68,5 @@ Developed by **Group 58** for the **Inteligência Artificial (IA)** course at **
 - Vasco Sá up202306731
 
 ### Acknowledgments
-- **Kaggle**: For the original 150,000-city dataset from the [Traveling Santa Problem](https://www.kaggle.com/competitions/traveling-santa-problem/) competition.
+- **Kaggle**: For hosting the [Traveling Santa Problem](https://www.kaggle.com/competitions/traveling-santa-problem/) competition.
+- **Robert Bosch (Oberlin College)**: For data generation and framing this specific TSP variant.
