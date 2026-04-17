@@ -57,7 +57,7 @@ The project features a console-based interactive menu for easy benchmarking.
     - `hill_climbing.py`
     - `simulated_annealing.py`
     - `genetic_algorithm.py`
-- `data/`: CSV datasets for different city counts.
+- `data/`: Custom testing datasets (10-10,000 cities) and the original 150,000-city dataset from Kaggle.
 
 ## Credits
 
@@ -66,3 +66,6 @@ Developed by **Group 58** for the **Inteligência Artificial (IA)** course at **
 - Ana Silva up202308786
 - Mário Pereira up202304965
 - Vasco Sá up202306731
+
+### Acknowledgments
+- **Kaggle**: For the original 150,000-city dataset from the [Traveling Santa Problem](https://www.kaggle.com/competitions/traveling-santa-problem/) competition.
